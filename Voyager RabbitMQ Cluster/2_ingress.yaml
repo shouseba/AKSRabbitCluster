@@ -1,0 +1,45 @@
+apiVersion: voyager.appscode.com/v1beta1
+kind: Ingress
+metadata:
+  name: rabbit-ingress
+  annotations:
+    ingress.appscode.com/keep-source-ip: "true"
+spec:
+  frontendRules:
+  - port: 443
+    rules:
+    # you can use IP addresses but also networks in the src acl. Both 192.168.20.0/24 and 192.168.10.3 work.
+    - acl network_allowed src  71.65.118.236 198.187.174.15 198.12.16.4 52.173.139.99 52.173.188.229 52.173.184.127 52.173.186.243 52.173.190.95
+    - block if !network_allowed
+  - port: 5671
+    rules:
+    - acl network_allowed src  71.65.118.236 198.187.174.15 198.12.16.4 52.173.139.99 52.173.188.229 52.173.184.127 52.173.186.243 52.173.190.95
+    - tcp-request connection reject if !network_allowed
+  - port: 5672
+    rules:
+    - acl network_allowed src  71.65.118.236 198.187.174.15 198.12.16.4 52.173.139.99 52.173.188.229 52.173.184.127 52.173.186.243 52.173.190.95
+    - tcp-request connection reject if !network_allowed
+  tls:
+  - secretName: taylohealhcateio
+    hosts:
+    - dev-rabbitmq.taylorhealthcare.io
+  rules:
+  - host: dev-rabbitmq.taylorhealthcare.io
+    http:
+      paths:
+      - backend:
+          serviceName: rabbitmq-management
+          servicePort: '15672'
+  - host: dev-rabbitmq.taylorhealthcare.io
+    tcp:
+      port: '5671'
+      backend:
+        serviceName: rabbitmq
+        servicePort: '5672'
+  - host: dev-rabbitmq.taylorhealthcare.io
+    tcp:
+      port: '5672'
+      noTLS: true
+      backend:
+        serviceName: rabbitmq
+        servicePort: '5672'
